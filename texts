@@ -1,0 +1,41 @@
+1.
+{"role": "user", "content": f"You are an Instagram Copywriter. Your job will be to write a relevant caption for an instagram post about a topic and image. \
+        Your tasks are the following: \
+        1. Understand the target audience and the client's description of their instagram I will provide you. \
+        2. Analyze the topic and image description I will provide you. \
+        3. Based on the client's description, their target audience and specific topic and image description, write a relevant caption for their post. \
+        4. The output should only be the caption for the post. \
+        The topic is: `{idea}`. \
+        The image prompt is: `{image_prompt}` \
+        The target audience is: `{target_segment}` \
+        The client's description of their instagram is: `{program_description}`"},
+            {"role": "assistant", "content": ""},])
+
+2.
+{"role": "system", "content": "You are a helpful assistant."},
+{"role": "user", "content": f"Considering the user's program description: '{program_description}' and their target audience: '{target_segment}' find 3 relevant keywords they could go trending with on social media. Only output a list of keywords separated by commas and nothing else."}])
+
+3.
+{"role": "system", "content": "You are a helpful assistant."},
+{"role": "user", "content": f"Considering the user's program description: '{program_description}' and their target audience: '{target_segment}', Is this news relevant to them? {news['title']}. Only output a 'Yes.' or a 'No.' answer."}
+
+4.
+{"role": "system", "content": "You are a helpful assistant."},
+{"role": "user", "content": f"""You are an instagram community manager that needs to come up with a relevant and creative idea for a client's post. Follow these steps to find the idea: \
+    1. Considering the client's description of their instagram:'{program_description}' and their target audience: '{target_segment}'. Generate a unique idea for their instagram from this news: '{content}'. Include actual content from the news in this idea, we are doing content marketing that most be valuable for the user and is not promotional.
+    2. Output a complete idea.
+    Avoid coming up with ideas that are unrelated with their target audience orthe client's description. Also avoid topics that require an image that has text written on it or several images, for instace, a meme, aquote, or topics such as 'three tips to...'."""}])
+
+5.
+{"role": "system", "content": "You are an instagram community manager."},
+{"role": "user", "content": f"You are an instagram community manager that needs to complete the idea of a client. Their idea is {user_idea}, however, it may be incomplete. A proper idea needs to have a clear topic and a style. Therefore, complete their idea with additional elements that will help portray their vision. Make sure that your completion is aligned with their {program_description} and {target_segment}. Nonetheless, if the idea the user provided is complete, leave it as it is."}])
+
+6.
+{"role": "user", "content": f"You are a Stable Diffusion prompt engineer. Your job is to create a prompt for a Stable Diffusion image model to generate an image about a topic. \
+            Your tasks are: \
+            1. Analyze the structural patterns in the example prompts I will provide you. \
+            2. Based on the patterns you find, create a prompt for the image model to generate an image for this idea: {idea}. Creatively represent the topic and the style detailed on the idea. \
+            3. The output should be a single prompt.\
+            The example prompts are surrounded by <>: <Vintage 90's anime style. cluttered starship interior; captain giving orders; by Hajime Sorayama, Greg Tocchini, Virgil Finlay, sci-fi, colors, neon lights> <pen and ink, birds eye view, illustrated by hergé, Background space and earth. man alone forever. Sadness.> <Abstract dark fantasy romance book cover of cinderella's glass slipper in front of a fantasy castle. highly detailed, fantasy artwork, digital painting, greg rutkowski, 8k, concept art, artstation, hyper detailed, rule of thirds, no text> <vintage personal handheld computer assistance devices, 1990s, c4d render, vaporwave, product photography> <50s cartoon style photo of a huge savage skelton emopunk robot in far off galaxy, style of Hannah Barbara, studio ghibli, akira toriyama, james gilleard, warner brothers, trending pixiv fanbox, acrylic palette knife, 8k, vibrant colors, devinart, trending on artstation, low details, smooth> <pixel art san francisco fisherman's wharf. 3d pixel art 4k wallpaper. incredible pixel art details. flowers. pixel art. lots of people in foreground. pixel art by Pixel Jeff> \
+            As a note, don't just copy the example prompts. Be creative and come up with your own prompts that creatively represent the idea. \
+            Avoid creating a prompt for an image that requires many objects or things, or one that asks for realistic faces, or one that has letters or numbers. The Stable Diffusion model still has difficulty generating these."}])
