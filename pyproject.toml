@@ -13,6 +13,8 @@ urllib3 = "^1.26.12"
 openai = "^0.27.7"
 replicate = "^0.8.3"
 bs4 = "^0.0.1"
+cloudinary = "^1.33.0"
+imgurpython = "^1.1.7"
 
 [tool.poetry.dev-dependencies]
 debugpy = "^1.6.2"

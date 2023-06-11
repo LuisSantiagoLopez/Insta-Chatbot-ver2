@@ -1,40 +1,23 @@
 import sqlite3
-import create_caption, create_idea, create_image, upload_instagram
+import json
+from decision_tree import decision_tree
 
-def chatgpt(prompt, temperature)
-    response = openai.ChatCompletion.create(
-    model="gpt-4",
-    messages=[{"role": "system", "content": "You are an instagram content creator."}, 
-              {"role": "user", "content":prompt}],
-    temperature=temperature)
-    return 
+user_id = input("Enter your name: ")
+conn = sqlite3.connect('decision_tree.db')
+c = conn.cursor()
+
+c.execute('''CREATE TABLE IF NOT EXISTS tree
+             (user_id TEXT, function TEXT, parameter TEXT, value TEXT, PRIMARY KEY(user_id, function, parameter))''')
 
 def store_dictionary_results(result):
     # If function returns a dictionary with results, update the results dictionary and the database
     if isinstance(result, dict):
         for key, value in result.items():
+            print("Type of value before json.dumps: ", type(value)) # Print the type of value
+            value = json.dumps(value)
+            print("Type of value after json.dumps: ", type(value)) # Print the type of value
             results[key] = value
             c.execute("REPLACE INTO tree (user_id, function, parameter, value) VALUES (?, ?, ?, ?)", (user_id, user_input, key, value))
-
-user_id = input("Enter your name: ")
-
-# Connect to SQLite database. This will create the database if it doesn't exist.
-conn = sqlite3.connect('decision_tree.db')
-c = conn.cursor()
-
-# Create table for storing parameters and results. This will not recreate the table if it already exists.
-c.execute('''CREATE TABLE IF NOT EXISTS tree
-             (user_id TEXT, function TEXT, parameter TEXT, value TEXT, PRIMARY KEY(user_id, function, parameter))''')
-
-# Here we define a dictionary mapping user commands to the respective functions and their parameters.
-decision_tree = {
-    "create idea": (create_idea.create_idea, ["target_segment", "program_description"]),
-    "normalize idea": (create_idea.normalize_idea, ["user_idea", "target_segment", "program_description"]),
-    "manipulate idea": (create_idea.manipulate_idea, ["idea"]),
-    "create image": (create_image.create_image, ["idea"]),
-    "create caption": (create_caption.create_caption, ["idea", "image_prompt", "target_segment", "program_description"]),
-    "upload instagram": (upload_instagram.upload_instagram, ["image_url", "caption"])
-}
 
 # Dictionary for storing results of functions
 results = {}
@@ -57,24 +40,23 @@ while True:
                 value = results[param]
               
             else:
-                c.execute("SELECT value FROM tree WHERE user_id=? AND function=? AND parameter=?", (user_id, user_input, param))
+                c.execute("SELECT value FROM tree WHERE user_id=? AND parameter=?", (user_id, param))
                 db_result = c.fetchone()
-                print("DB Result for param", param, ":", db_result) # Debug print
-                value = db_result
             
                 if db_result is None:
                     value = input(f"Enter {param}: ") 
                     c.execute("REPLACE INTO tree (user_id, function, parameter, value) VALUES (?, ?, ?, ?)",(user_id, user_input, param, value))
+
+                else:
+                  value = db_result[0]
           
             parameter_values[param] = value
             results[param] = value
 
-        # We call the function with the collected parameters and store the result.
-        if user_input in ["create idea", "normalize idea", "manipulate idea", "find topic"]:
-            result = func(conn, c, user_id, user_input, **parameter_values)
-            store_dictionary_results(result)
-        else:
-            result = func(**parameter_values)
+        # We call the function with the collected parameters and store the result
+        result = func(conn, c, user_id, user_input, **parameter_values)
+
+        if user_input not in ["create idea", "normalize idea", "manipulate idea"]:
             store_dictionary_results(result)
 
         # Commit changes to the database.
@@ -90,21 +72,6 @@ while True:
 conn.close()
 
 """
-luissantiago
-create idea
-28-45 year olds searching to grow their business through AI.
-MARS is an automatic social media marketing agency dedicated to bringing results at a lower price
-create image
-create caption
-upload instagram
-"""
-
-"""
-Cosas que le quiero añadir:
-1. Tomar curso de Prompt Engineering de ChatGPT para mejorar la calidad de los outputs 
-2. Dejar que el usuario agregue su página web para entender más sobre su programa (SERP-API)
-3. Que la función de ideas tenga acceso a tendencias 
-4. Conectarse con MidJourney a través de Discord
-5. Guardar las (ideas / prompts / captions) que el usuario decidió subir en su base de datos dentro de cada función. 
-6. Que el programa pueda retraer las métricas y aplicarlas en el siguiente post
+Enter target_segment: lower income workers that distrust of insurance companies
+Enter program_description: beesure is an insurtech that sells affordable digital insurance
 """

@@ -1,6 +1,7 @@
 import os
 
-REPLICATE_API_TOKEN = os.environ['REPLICATE_API_TOKEN']
 AYRSHARE_API_KEY = os.environ['AYRSHARE_API_KEY']
 OPENAI_API_KEY = os.environ['OPENAI_API_KEY']
 SERP_API_KEY = os.environ['SERP_API_KEY']
+imgur_client_id = os.environ['imgur_client_id']
+imgur_client_secret = os.environ['imgur_client_secret']
