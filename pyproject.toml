@@ -15,6 +15,7 @@ replicate = "^0.8.3"
 bs4 = "^0.0.1"
 cloudinary = "^1.33.0"
 imgurpython = "^1.1.7"
+Pillow = "^9.5.0"
 
 [tool.poetry.dev-dependencies]
 debugpy = "^1.6.2"

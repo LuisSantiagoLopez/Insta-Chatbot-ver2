@@ -9,6 +9,10 @@ c = conn.cursor()
 c.execute('''CREATE TABLE IF NOT EXISTS tree
              (user_id TEXT, function TEXT, parameter TEXT, value TEXT, PRIMARY KEY(user_id, function, parameter))''')
 
+c.execute('''CREATE TABLE IF NOT EXISTS news 
+             (user_id TEXT, title TEXT, PRIMARY KEY(user_id, title))''')
+
+
 def store_dictionary_results(result):
     # If function returns a dictionary with results, update the results dictionary and the database
     if isinstance(result, dict):

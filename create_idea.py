@@ -1,6 +1,5 @@
 from chatgpt import chatgpt
 import requests
-import sqlite3
 import json
 from serpapi import GoogleSearch
 from bs4 import BeautifulSoup
@@ -11,8 +10,7 @@ def replace_idea(conn, c, user_id, user_input, idea):
     c.execute("REPLACE INTO tree (user_id, function, parameter, value) VALUES (?, ?, ?, ?)", (user_id, user_input, "idea", str_idea))
     conn.commit()
 
-def create_idea(conn, c, user_id, user_input, target_segment, program_description):
-    c.execute('''CREATE TABLE IF NOT EXISTS news (user_id TEXT, title TEXT)''')
+def trends(conn, c, user_id, user_input):
     prompt = "Execute the following tasks to find 3 relevant keywords for the client: \
     - Find 3 one or two word keywords that are relevant to the client's instagram. \
     - Only output the three keywords separated by commas."
@@ -74,6 +72,10 @@ def create_idea(conn, c, user_id, user_input, target_segment, program_descriptio
         Title: '{title}'. Contents: '{news_contents[title]}'"
         news_contents[title] = chatgpt(conn, c, user_id, user_input, prompt, 0.2)
     
+    return news_contents
+
+def create_idea(conn, c, user_id, user_input, target_segment, program_description):
+    news_contents = trends(conn, c, user_id, user_input)
     ideas = {}
     for title, content in news_contents.items():
         prompt = f"Your task is to create an idea for an Instagram post based on the summary of this news article: '{title}' \
@@ -82,9 +84,10 @@ def create_idea(conn, c, user_id, user_input, target_segment, program_descriptio
             Therefore, your idea should contain the following elements: \
             - A pitch of your idea to the client \
             - Relevant information about the news article. \
-            - An imaginative representation of the topic that only requires an illustration with no text. \
+            - A really simple and imaginative representation of the topic that only requires an illustration with no text and no logos. \
             - A caption that tells the news summary in an engaging way and  is relevant to the client's target audience. Make an extensive and elaborate caption. Consider that the audience has no contextual knowledge about the news and no other links or reports available through the post. \
             Summary of the News Article '{title}': ```{content}``` \
+            - Do not ask for an illustration with logos or text. \
             Structure your output in JSON format with the following keys: \
             Instagram Idea: 'Here goes the title of your idea' \
             Caption: 'Here goes the caption of the post with relevant data about the summary of the news article, along with relevant data about our client.' \
@@ -102,10 +105,6 @@ def create_idea(conn, c, user_id, user_input, target_segment, program_descriptio
     chosen_idea_number = int(input("Enter the number of your chosen topic: "))
     chosen_title = list(ideas.keys())[chosen_idea_number-1]
     idea = ideas[chosen_title]
-
-        # 7. Save the news in the database so it doesn't repeat later
-    conn = sqlite3.connect('decision_tree.db')
-    c = conn.cursor()
     
     c.execute("INSERT INTO news (user_id, title) VALUES (?, ?)",(user_id, chosen_title))
     conn.commit()
@@ -117,7 +116,7 @@ def normalize_idea(conn, c, user_id, user_input, user_idea, target_segment, prog
     prompt = f"Your task is to create an idea for an Instagram post based on the user's idea inside triple backticks. \ Based on your idea, the client will decide whether to generate the post or not. \
             Therefore, your idea should contain the following elements: \
             - A pitch of your idea to the client \
-            - An imaginative representation of the topic that only requires an illustration with no text. \
+            - A really simple and imaginative representation of the topic that only requires an illustration with no text. \
             - A caption that expands on the topic at hand with relevant emojis. \
             User's Idea: ```{user_idea}``` \
             Structure your output in JSON format with the following keys: \
