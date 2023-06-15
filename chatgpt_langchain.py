@@ -1,7 +1,14 @@
-from langchain.models import ChatOpenAI
+import json
+from langchain.prompts import (
+    ChatPromptTemplate, 
+    MessagesPlaceholder, 
+    SystemMessagePromptTemplate, 
+    HumanMessagePromptTemplate
+)
+from langchain.schema import messages_from_dict, messages_to_dict
 from langchain.chains import ConversationChain
+from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationSummaryBufferMemory
-from langchain.prompts import SystemMessagePromptTemplate
 
 variables = {}
 def chatgpt(conn, c, user_id, user_input, prompt, temperature, model="gpt-3.5-turbo"):
@@ -13,22 +20,17 @@ def chatgpt(conn, c, user_id, user_input, prompt, temperature, model="gpt-3.5-tu
         c.execute("SELECT value FROM tree WHERE user_id=? AND parameter=?", (user_id, param))
         parameter_value = c.fetchone()
         variables[param] = parameter_value
-
-    llm = ChatOpenAI(temperature=0.5, model="gpt-4")
-    memory = ConversationSummaryBufferMemory(llm=llm, max_token_limit=200)
-    chain = ConversationChain(
-        llm=llm, 
-        memory = memory,
-        verbose=True
-    )
-
-    system_message_template = "You are an instagram content creator for this client's instagram: '{variables['program_description']}' with this target audience: '{variables['target_segment']}'. Help them execute a variety of tasks related with their instagram content marketing."
   
-    system_message_prompt = SystemMessagePromptTemplate.from_template(system_message_template)
+    system_message_template = f"You are a helpful instagram content creator for this client's instagram: '{variables['program_description']}' with this target audience: '{variables['target_segment']}'. Help them execute a variety of tasks related with their instagram content marketing."
 
-    formatted_system_message_prompt = system_message_prompt.format(target_segment=variables['target_segment'], program_description=variables['program_description'])
+    chat_prompt = ChatPromptTemplate.from_messages([
+    SystemMessagePromptTemplate.from_template(system_message_template),
+    MessagesPlaceholder(variable_name="history"),
+    HumanMessagePromptTemplate.from_template("{input}")
+])
 
-    chain.system_message = formatted_system_message_prompt
+    chat = ChatOpenAI(temperature=0.5, model="gpt-4")
+    memory = ConversationSummaryBufferMemory(llm=chat, max_token_limit=10, return_messages=True)
   
     # Fetch past conversation from the database
     c.execute("SELECT prompt, output FROM conversations WHERE user_id=?", (user_id,))
@@ -37,12 +39,24 @@ def chatgpt(conn, c, user_id, user_input, prompt, temperature, model="gpt-3.5-tu
     # Add past conversation to memory
     for conversation in conversation_history:
         memory.save_context({"input": conversation[0]}, {"output": conversation[1]})
+    else:
+        print("No conversation history")
+
+    print("MEMORY:", memory.load_memory_variables({}))
+  
+    conversation = ConversationChain(
+    llm=chat,
+    prompt=chat_prompt,
+    memory=memory,
+    verbose=True
+    )
   
     # Get the AI response
-    response = chain.run(user_input)
+    response = conversation.predict(input=prompt)
+    print("response", response)
     
     # Save the prompt and output to the database
-    c.execute('INSERT INTO conversations (user_id, prompt, output) VALUES (?, ?, ?)', (user_id, user_input, response))
+    c.execute('INSERT INTO conversations (user_id, prompt, output) VALUES (?, ?, ?)', (user_id, prompt, response))
     conn.commit()
   
     return response

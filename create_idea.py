@@ -1,4 +1,4 @@
-from chatgpt import chatgpt
+from chatgpt_langchain import chatgpt
 import requests
 import json
 from serpapi import GoogleSearch
@@ -14,8 +14,10 @@ def trends(conn, c, user_id, user_input):
     prompt = "Execute the following tasks to find 3 relevant keywords for the client: \
     - Find 3 one or two word keywords that are relevant to the client's instagram. \
     - Only output the three keywords separated by commas."
-    
+
     keywords = chatgpt(conn, c, user_id, user_input, prompt, 0.7, "gpt-4")
+    print(keywords)
+  
     trends_search = GoogleSearch({"q": keywords, 
                                   "engine": "google_trends",
                                   "date": "now 1-d",
@@ -27,7 +29,8 @@ def trends(conn, c, user_id, user_input):
 
     values = latest_entry['values']
     sorted_keywords = sorted(values, key=lambda x: int(x['value']), reverse=True)[:1]
-
+    print(sorted_keywords)
+    
     for keyword_results in sorted_keywords:
         keyword = keyword_results['query']
         news_search = GoogleSearch({"q": keyword, "tbm": "nws", "api_key": SERP_API_KEY})
@@ -41,10 +44,12 @@ def trends(conn, c, user_id, user_input):
             if db_result is None:
                 if len(relevant_news) < 2:
                     prompt = f"Your task is to determine whether this news title: '{news['title']}' is relevant to our client's audience and description. Output a 'yes.' or 'no.' answer, even if you are not certain if the answer is correct."
-                    is_news_relevant = chatgpt(conn, c, user_id, user_input, prompt, 0)
+                    is_news_relevant = chatgpt(conn, c, user_id, user_input, prompt, 0)  
+                    print(is_news_relevant)
                   
                     if is_news_relevant.lower() == 'yes.':
                         relevant_news[news['title']] = news['link']
+                        print(news['title'])
                 else:
                     break
             else:
@@ -71,7 +76,6 @@ def trends(conn, c, user_id, user_input):
         prompt = f"Summarize this news article into bullet points with the most important parts of its content.\
         Title: '{title}'. Contents: '{news_contents[title]}'"
         news_contents[title] = chatgpt(conn, c, user_id, user_input, prompt, 0.2)
-    
     return news_contents
 
 def create_idea(conn, c, user_id, user_input, target_segment, program_description):
@@ -84,7 +88,7 @@ def create_idea(conn, c, user_id, user_input, target_segment, program_descriptio
             Therefore, your idea should contain the following elements: \
             - A pitch of your idea to the client \
             - Relevant information about the news article. \
-            - A really simple and imaginative representation of the topic that only requires an illustration with no text and no logos. \
+            - An imaginative representation of the topic that only requires an illustration with no text and no logos. The representation must fit in a sentence. \
             - A caption that tells the news summary in an engaging way and  is relevant to the client's target audience. Make an extensive and elaborate caption. Consider that the audience has no contextual knowledge about the news and no other links or reports available through the post. \
             Summary of the News Article '{title}': ```{content}``` \
             - Do not ask for an illustration with logos or text. \
