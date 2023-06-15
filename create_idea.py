@@ -1,4 +1,5 @@
-from chatgpt_langchain import chatgpt
+from chatgpt_langchain import chatgptlc
+from chatgpt import chatgpt
 import requests
 import json
 from serpapi import GoogleSearch
@@ -11,11 +12,11 @@ def replace_idea(conn, c, user_id, user_input, idea):
     conn.commit()
 
 def trends(conn, c, user_id, user_input):
-    prompt = "Execute the following tasks to find 3 relevant keywords for the client: \
-    - Find 3 one or two word keywords that are relevant to the client's instagram. \
-    - Only output the three keywords separated by commas."
+    prompt = "Execute the following tasks to find 5 relevant keywords for the client: \
+    - Find 5 common and popular one or two word keywords that are directly related to the client's instagram. \
+    - Only output the five keywords separated by commas."
 
-    keywords = chatgpt(conn, c, user_id, user_input, prompt, 0.7, "gpt-4")
+    keywords = chatgptlc(conn, c, user_id, user_input, prompt, 0.7, "gpt-4")
     print(keywords)
   
     trends_search = GoogleSearch({"q": keywords, 
@@ -28,6 +29,8 @@ def trends(conn, c, user_id, user_input):
     latest_entry = max(trends_results["interest_over_time"]["timeline_data"], key=lambda x: int(x['timestamp']))
 
     values = latest_entry['values']
+    values = [d for d in values if d['value'] != '<1']
+
     sorted_keywords = sorted(values, key=lambda x: int(x['value']), reverse=True)[:1]
     print(sorted_keywords)
     
@@ -42,18 +45,17 @@ def trends(conn, c, user_id, user_input):
             db_result = c.fetchone()
             
             if db_result is None:
-                if len(relevant_news) < 2:
-                    prompt = f"Your task is to determine whether this news title: '{news['title']}' is relevant to our client's audience and description. Output a 'yes.' or 'no.' answer, even if you are not certain if the answer is correct."
-                    is_news_relevant = chatgpt(conn, c, user_id, user_input, prompt, 0)  
-                    print(is_news_relevant)
+                prompt = f"Your task is to determine whether this news title: '{news['title']}' is relevant to our client's audience and description. Output a 'yes.' or 'no.' answer, even if you are not certain if the answer is correct."
+                is_news_relevant = chatgpt(conn, c, user_id, user_input, prompt, 0)  
+                print(is_news_relevant)
                   
-                    if is_news_relevant.lower() == 'yes.':
-                        relevant_news[news['title']] = news['link']
-                        print(news['title'])
+                if is_news_relevant.lower() == 'yes.':
+                    relevant_news[news['title']] = news['link']
+                    print(news['title'])
                 else:
                     break
             else:
-              continue
+                continue
     
     news_contents = {}
     for title, link in relevant_news.items():
@@ -87,18 +89,16 @@ def create_idea(conn, c, user_id, user_input, target_segment, program_descriptio
             Based on your idea, the client will decide whether to generate the post or not. \
             Therefore, your idea should contain the following elements: \
             - A pitch of your idea to the client \
-            - Relevant information about the news article. \
-            - An imaginative representation of the topic that only requires an illustration with no text and no logos. The representation must fit in a sentence. \
-            - A caption that tells the news summary in an engaging way and  is relevant to the client's target audience. Make an extensive and elaborate caption. Consider that the audience has no contextual knowledge about the news and no other links or reports available through the post. \
+            - Relevant information about the news article for a caption that entertains the user with the news and connects it to insurance. \
+            - A single sentence for a simple illustrative representation of the topic that requires no text, no logos, no explanations and no representations. \
             Summary of the News Article '{title}': ```{content}``` \
             - Do not ask for an illustration with logos or text. \
             Structure your output in JSON format with the following keys: \
             Instagram Idea: 'Here goes the title of your idea' \
-            Caption: 'Here goes the caption of the post with relevant data about the summary of the news article, along with relevant data about our client.' \
-            Explanation: 'Here goes the body of your idea' \
-            Illustration: 'Here goes the imaginative representation of the topic'"
+            Caption: 'Here goes the caption of the post.' \
+            Illustration: 'Here goes the illustrative representation of the topic'"
         
-        ideas[title] = json.loads(chatgpt(conn, c, user_id, user_input, prompt, 0.4, "gpt-4"))
+        ideas[title] = json.loads(chatgptlc(conn, c, user_id, user_input, prompt, 0.4, "gpt-4"))
         ideas[title]["News Title"] = title
         ideas[title]["News Summary"] = content
 
@@ -120,7 +120,7 @@ def normalize_idea(conn, c, user_id, user_input, user_idea, target_segment, prog
     prompt = f"Your task is to create an idea for an Instagram post based on the user's idea inside triple backticks. \ Based on your idea, the client will decide whether to generate the post or not. \
             Therefore, your idea should contain the following elements: \
             - A pitch of your idea to the client \
-            - A really simple and imaginative representation of the topic that only requires an illustration with no text. \
+            - A really simple representation of the topic that only requires an illustration with no text. \
             - A caption that expands on the topic at hand with relevant emojis. \
             User's Idea: ```{user_idea}``` \
             Structure your output in JSON format with the following keys: \
@@ -129,7 +129,7 @@ def normalize_idea(conn, c, user_id, user_input, user_idea, target_segment, prog
             Explanation: 'Here goes the body of the idea' \
             Illustration: 'Here goes the imaginative representation of the topic'"
   
-    idea = chatgpt(conn, c, user_id, user_input, prompt, 0.5, "gpt-4")
+    idea = chatgptlc(conn, c, user_id, user_input, prompt, 0.5, "gpt-4")
     replace_idea(conn, c, user_id, user_input, idea)
     return {"idea":idea}
 

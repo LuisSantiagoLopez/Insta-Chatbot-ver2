@@ -7,7 +7,7 @@ decision_tree = {
     "create idea": (create_idea, ["target_segment", "program_description"]),
     "normalize idea": (normalize_idea, ["user_idea", "target_segment", "program_description"]),
     "manipulate idea": (manipulate_idea, ["idea"]),
-    "create image": (create_image, ["idea"]),
+    "create image": (create_image, ["idea", "styles"]),
     "create caption": (create_caption, ["idea"]),
     "upload instagram": (upload_instagram, ["image_url", "caption"])
 }

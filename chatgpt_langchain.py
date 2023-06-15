@@ -1,17 +1,16 @@
-import json
 from langchain.prompts import (
     ChatPromptTemplate, 
     MessagesPlaceholder, 
     SystemMessagePromptTemplate, 
     HumanMessagePromptTemplate
 )
-from langchain.schema import messages_from_dict, messages_to_dict
 from langchain.chains import ConversationChain
 from langchain.chat_models import ChatOpenAI
-from langchain.memory import ConversationSummaryBufferMemory
+from langchain.memory import ConversationBufferWindowMemory
 
 variables = {}
-def chatgpt(conn, c, user_id, user_input, prompt, temperature, model="gpt-3.5-turbo"):
+conversations = []
+def chatgptlc(conn, c, user_id, user_input, prompt, temperature, model="gpt-3.5-turbo"):
     c.execute('CREATE TABLE IF NOT EXISTS conversations (user_id TEXT, prompt TEXT, output TEXT)')
     
     params_needed = ["target_segment", "program_description"]
@@ -29,8 +28,8 @@ def chatgpt(conn, c, user_id, user_input, prompt, temperature, model="gpt-3.5-tu
     HumanMessagePromptTemplate.from_template("{input}")
 ])
 
-    chat = ChatOpenAI(temperature=0.5, model="gpt-4")
-    memory = ConversationSummaryBufferMemory(llm=chat, max_token_limit=10, return_messages=True)
+    chat = ChatOpenAI(temperature=0.5, model=model)
+    memory = ConversationBufferWindowMemory(k=5, return_messages=True)
   
     # Fetch past conversation from the database
     c.execute("SELECT prompt, output FROM conversations WHERE user_id=?", (user_id,))
@@ -38,7 +37,12 @@ def chatgpt(conn, c, user_id, user_input, prompt, temperature, model="gpt-3.5-tu
 
     # Add past conversation to memory
     for conversation in conversation_history:
-        memory.save_context({"input": conversation[0]}, {"output": conversation[1]})
+        input = conversation[0]
+        output = conversation[1]
+        print(input, output)
+        conversations.append({"input": input})
+        conversations.append({"output": output})
+        memory.save_context({"input": input}, {"output": output})
     else:
         print("No conversation history")
 
