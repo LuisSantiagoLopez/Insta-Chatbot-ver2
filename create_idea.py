@@ -13,7 +13,7 @@ def replace_idea(conn, c, user_id, user_input, idea):
 
 def trends(conn, c, user_id, user_input):
     prompt = "Execute the following tasks to find 5 relevant keywords for the client: \
-    - Find 5 common and popular one or two word keywords that are directly related to the client's instagram. \
+    - Find 5 common and popular one or two word keywords that are directly related to the client's target audience. \
     - Only output the five keywords separated by commas."
 
     keywords = chatgptlc(conn, c, user_id, user_input, prompt, 0.7, "gpt-4")
@@ -31,7 +31,7 @@ def trends(conn, c, user_id, user_input):
     values = latest_entry['values']
     values = [d for d in values if d['value'] != '<1']
 
-    sorted_keywords = sorted(values, key=lambda x: int(x['value']), reverse=True)[:1]
+    sorted_keywords = sorted(values, key=lambda x: int(x['value']), reverse=True)[:3]
     print(sorted_keywords)
     
     for keyword_results in sorted_keywords:
@@ -45,21 +45,22 @@ def trends(conn, c, user_id, user_input):
             db_result = c.fetchone()
             
             if db_result is None:
-                prompt = f"Your task is to determine whether this news title: '{news['title']}' is relevant to our client's audience and description. Output a 'yes.' or 'no.' answer, even if you are not certain if the answer is correct."
-                is_news_relevant = chatgpt(conn, c, user_id, user_input, prompt, 0)  
-                print(is_news_relevant)
+                if len(relevant_news) < 3:
+                  prompt = f"Your task is to determine whether this news title: '{news['title']}' is relevant to our client's audience and description. Output a 'yes.' or 'no.' answer, even if you are not certain if the answer is correct."
+                  is_news_relevant = chatgpt(conn, c, user_id, user_input, prompt, 0)  
+                  print(is_news_relevant)
                   
                 if is_news_relevant.lower() == 'yes.':
                     relevant_news[news['title']] = news['link']
                     print(news['title'])
-                else:
-                    break
             else:
                 continue
     
     news_contents = {}
+    print(relevant_news)
     for title, link in relevant_news.items():
         response = requests.get(link)
+        print(f"Status Code: {response.status_code}")
         soup = BeautifulSoup(response.content, 'html.parser')
         paragraphs = soup.find_all('p')
         news_text = ""
@@ -89,7 +90,7 @@ def create_idea(conn, c, user_id, user_input, target_segment, program_descriptio
             Based on your idea, the client will decide whether to generate the post or not. \
             Therefore, your idea should contain the following elements: \
             - A pitch of your idea to the client \
-            - Relevant information about the news article for a caption that entertains the user with the news and connects it to insurance. \
+            - An emotional and eye-catching caption that explains the content of the news article. \
             - A single sentence for a simple illustrative representation of the topic that requires no text, no logos, no explanations and no representations. \
             Summary of the News Article '{title}': ```{content}``` \
             - Do not ask for an illustration with logos or text. \

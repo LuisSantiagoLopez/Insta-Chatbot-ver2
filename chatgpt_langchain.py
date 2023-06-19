@@ -29,7 +29,7 @@ def chatgptlc(conn, c, user_id, user_input, prompt, temperature, model="gpt-3.5-
 ])
 
     chat = ChatOpenAI(temperature=0.5, model=model)
-    memory = ConversationBufferWindowMemory(k=5, return_messages=True)
+    memory = ConversationBufferWindowMemory(k=6, return_messages=True)
   
     # Fetch past conversation from the database
     c.execute("SELECT prompt, output FROM conversations WHERE user_id=?", (user_id,))
@@ -62,5 +62,5 @@ def chatgptlc(conn, c, user_id, user_input, prompt, temperature, model="gpt-3.5-
     # Save the prompt and output to the database
     c.execute('INSERT INTO conversations (user_id, prompt, output) VALUES (?, ?, ?)', (user_id, prompt, response))
     conn.commit()
-  
+    
     return response

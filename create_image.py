@@ -31,7 +31,7 @@ Take these considerations when writing the prompt: \
 - describe the background. \
 - Incorporate the user's style: '{styles}' \
 Avoid these mistakes when writing a prompt: \
-- DALLE can not generate human faces, people or hands appropriately \
+- DALLE can not generate human faces, human figures, people or hands appropriately \
 - DALLE can not generate text on an image. No logos, no text. \
 - DALLE can not create complex images. \
 - DALLE prompts should be extremely simple signle sentences. \
