@@ -17,9 +17,7 @@ def store_dictionary_results(result):
     # If function returns a dictionary with results, update the results dictionary and the database
     if isinstance(result, dict):
         for key, value in result.items():
-            print("Type of value before json.dumps: ", type(value)) # Print the type of value
             value = json.dumps(value)
-            print("Type of value after json.dumps: ", type(value)) # Print the type of value
             results[key] = value
             c.execute("REPLACE INTO tree (user_id, function, parameter, value) VALUES (?, ?, ?, ?)", (user_id, user_input, key, value))
 
@@ -40,19 +38,18 @@ while True:
       
         for param in params:
             # Get value either from results dictionary or, if not present there, from the database
-            if param in results:
-                value = results[param]
-              
-            else:
-                c.execute("SELECT value FROM tree WHERE user_id=? AND parameter=?", (user_id, param))
-                db_result = c.fetchone()
+#            if param in results:
+#                value = results[param]          
+#            else:
+            c.execute("SELECT value FROM tree WHERE user_id=? AND parameter=?", (user_id, param))
+            db_result = c.fetchone()
             
-                if db_result is None:
-                    value = input(f"Enter {param}: ") 
-                    c.execute("REPLACE INTO tree (user_id, function, parameter, value) VALUES (?, ?, ?, ?)",(user_id, user_input, param, value))
+            if db_result is None:
+                value = input(f"Enter {param}: ") 
+                c.execute("REPLACE INTO tree (user_id, function, parameter, value) VALUES (?, ?, ?, ?)",(user_id, user_input, param, value))
 
-                else:
-                  value = db_result[0]
+            else:
+              value = db_result[0]
           
             parameter_values[param] = value
             results[param] = value

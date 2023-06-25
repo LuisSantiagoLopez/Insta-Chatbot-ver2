@@ -6,7 +6,7 @@ def generate_image_dalle(image_prompt):
     response = openai.Image.create(
       prompt=image_prompt,
       n=4,
-      size="512x512"
+      size="1024x1024"
     )
     image_urls = response["data"]
 
@@ -29,12 +29,13 @@ The text prompt should be one simple sentence describing the image with ', digit
 Take these considerations when writing the prompt: \
 - styles such as 3d renders and manga work best \
 - describe the background. \
-- Incorporate the user's style: '{styles}' \
+- Incorporate the user's style: '{styles}'. \
 Avoid these mistakes when writing a prompt: \
 - DALLE can not generate human faces, human figures, people or hands appropriately \
 - DALLE can not generate text on an image. No logos, no text. \
 - DALLE can not create complex images. \
 - DALLE prompts should be extremely simple signle sentences. \
+- ONLY take into account the idea inside the triple backticks. \
 - The DALLE prompt should contain NO explanations, don't unse 'symbolizing', \ 'representing' or any other justification. \
 Your output should be a JSON dictionary with the key 'prompt' \
 Client's idea: ```{idea['Illustration']}```."

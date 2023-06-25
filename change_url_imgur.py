@@ -4,15 +4,8 @@ from imgurpython import ImgurClient
 from config import imgur_client_id, imgur_client_secret
 
 def change_url(url):
-  
-    # Download the image
-    url = url.strip('\"')
-    response = requests.get(url)
-    image_filename = "downloaded_image.png"
-    
-    # Save the image
-    with open(image_filename, 'wb') as file:
-        file.write(response.content)
+
+    image_filename = save_image(url)
 
     # Upload the image to Imgur
     client = ImgurClient(imgur_client_id, imgur_client_secret)
@@ -25,3 +18,15 @@ def change_url(url):
   
     # Return the Imgur URL
     return upload_result['link']
+
+def save_image(url):
+    # Download the image
+    url = url.strip('\"')
+    response = requests.get(url)
+    image_filename = "downloaded_image.jpg"
+    
+    # Save the image
+    with open(image_filename, 'wb') as file:
+        file.write(response.content)
+
+    return image_filename

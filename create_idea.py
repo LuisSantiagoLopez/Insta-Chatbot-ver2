@@ -82,40 +82,71 @@ def trends(conn, c, user_id, user_input):
     return news_contents
 
 def create_idea(conn, c, user_id, user_input, target_segment, program_description):
+    # Create the 'ideas' table if it doesn't exist
+    c.execute('''CREATE TABLE IF NOT EXISTS ideas
+                 (user_id TEXT, title TEXT PRIMARY KEY, idea_json TEXT)''')
+    conn.commit()
+
+    # Fetch existing ideas from the database
+    c.execute("SELECT title, idea_json FROM ideas WHERE user_id=?", (user_id,))
+    existing_ideas = c.fetchall()
+
+    # Check if there are existing ideas
+    if existing_ideas:
+        print("Existing ideas found. Select an idea:")
+        for i, (title, idea_json) in enumerate(existing_ideas):
+            idea = json.loads(idea_json)
+            print(f"{i+1}. {title}: {idea}")
+
+        chosen_idea_number = int(input("Enter the number of your chosen idea: "))
+        chosen_title, chosen_idea_json = existing_ideas[chosen_idea_number - 1]
+        idea = json.loads(chosen_idea_json)
+
+        c.execute("DELETE FROM ideas WHERE title=?", (chosen_title,))
+        conn.commit()
+
+        replace_idea(conn, c, user_id, user_input, idea)
+        return {'idea': idea}
+
+    # Execute the trends function to generate new ideas
     news_contents = trends(conn, c, user_id, user_input)
-    ideas = {}
+
     for title, content in news_contents.items():
         prompt = f"Your task is to create an idea for an Instagram post based on the summary of this news article: '{title}' \
             which is inside the triple backticks. \
             Based on your idea, the client will decide whether to generate the post or not. \
             Therefore, your idea should contain the following elements: \
             - A pitch of your idea to the client \
-            - An emotional and eye-catching caption that explains the content of the news article. \
-            - A single sentence for a simple illustrative representation of the topic that requires no text, no logos, no explanations and no representations. \
+            - A caption that explains the content of the news article in detail. Remember the users will have no other context other than the caption. Make the caption entertaining and as long as necessary. Add relevant hashtags at the end. Do not add emojis to the caption. \
+            - A single sentence for a simple illustrative representation of the topic that requires no text, no logos, no explanations, and no representations. \
             Summary of the News Article '{title}': ```{content}``` \
             - Do not ask for an illustration with logos or text. \
             Structure your output in JSON format with the following keys: \
             Instagram Idea: 'Here goes the title of your idea' \
             Caption: 'Here goes the caption of the post.' \
-            Illustration: 'Here goes the illustrative representation of the topic'"
-        
-        ideas[title] = json.loads(chatgptlc(conn, c, user_id, user_input, prompt, 0.4, "gpt-4"))
-        ideas[title]["News Title"] = title
-        ideas[title]["News Summary"] = content
+            Illustration: 'Here goes the illustrative representation of the topic' \
+            News: 'Here goes the summary of the news article'"
 
-    # 6. Let the user choose the most relevant topic
+        idea_json = chatgptlc(conn, c, user_id, user_input, prompt, 0.4, "gpt-4")
+
+        c.execute("INSERT INTO ideas (user_id, title, idea_json) VALUES (?, ?, ?)", (user_id, title, idea_json))
+        conn.commit()
+
     print("Please choose the best idea:")
-    for i, (title, idea) in enumerate(ideas.items()):
-        print(f"{i+1}. {title}: {idea}")
-    chosen_idea_number = int(input("Enter the number of your chosen topic: "))
-    chosen_title = list(ideas.keys())[chosen_idea_number-1]
-    idea = ideas[chosen_title]
-    
-    c.execute("INSERT INTO news (user_id, title) VALUES (?, ?)",(user_id, chosen_title))
+    for i, (title, _) in enumerate(news_contents.items()):
+        print(f"{i+1}. {title}")
+
+    chosen_idea_number = int(input("Enter the number of your chosen idea: "))
+    chosen_title = list(news_contents.keys())[chosen_idea_number - 1]
+    chosen_idea_json = c.execute("SELECT idea_json FROM ideas WHERE user_id=? AND title=?", (user_id, chosen_title)).fetchone()[0]
+    idea = json.loads(chosen_idea_json)
+
+    c.execute("DELETE FROM ideas WHERE title=?", (chosen_title,))
     conn.commit()
-  
+
     replace_idea(conn, c, user_id, user_input, idea)
-    return {'idea':idea}
+    return {'idea': idea}
+
 
 def normalize_idea(conn, c, user_id, user_input, user_idea, target_segment, program_description):
     prompt = f"Your task is to create an idea for an Instagram post based on the user's idea inside triple backticks. \ Based on your idea, the client will decide whether to generate the post or not. \
