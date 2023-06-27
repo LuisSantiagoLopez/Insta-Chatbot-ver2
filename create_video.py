@@ -1,5 +1,55 @@
+from config import PEXELS_API_KEY
+import json
+import shutil
+import requests
+from gtts import gTTS
+import os
+from pydub import AudioSegment
+
+def download_video(url, filename):
+    response = requests.get(url, stream=True)
+    
+    if response.status_code == 200:
+        with open(filename, 'wb') as f:
+            response.raw.decode_content = True
+            shutil.copyfileobj(response.raw, f)
+
+def get_pexels_video(keyword):
+    headers = {
+        'Authorization': 'Your_Pexels_API_Key', # replace with your actual Pexels API key
+    }
+
+    response = requests.get(f'https://api.pexels.com/videos/search?query={keyword}&per_page=1', headers=headers)
+
+    # Check if the request was successful
+    if response.status_code == 200:
+        data = json.loads(response.text)
+
+        # Check if there is at least one video
+        if data['videos']:
+            # Get the URL of the first video
+            video_url = data['videos'][0]['video_files'][0]['link']
+
+            return video_url
+
+    else:
+        print(f'Error: {response.status_code}')
+        return None
+
+def text_to_speech(text, filename):
+    # Create speech
+    tts = gTTS(text=text, lang='en')
+    # Save to file
+    tts.save(filename)
+
+    # Get duration of the audio file
+    audio = AudioSegment.from_file(filename)
+    duration = len(audio) / 1000  # duration in seconds
+
+    return filename, duration
+
+
 def create_video(conn, c, user_id, user_input, idea, tone):
-  
   if idea['News']:
     prompt = f"Create a prose social media video script based on the news article inside the triple backticks. \
     Consider the following elements when writing the script: \
@@ -17,23 +67,11 @@ def create_video(conn, c, user_id, user_input, idea, tone):
 
   comma_keywords = chatgptlc(conn, c, user_id, user_input, prompt, 0, "gpt-4")
   keywords = keywords_str.split(', ')
+
+  for i, keyword in enumerate(keywords):
+    # Get video URL from Pexels using keyword
+    video_url = get_pexels_video(keyword)  # Add your Pexels API call function here
+
+    # Download video
+    download_video(video_url, f"video_{i}.mp4")  # This will save the video as "video_0.mp4", "video_1.mp4", etc.
     
-def download_video(video_url):
-    # Send a GET request to the video URL
-    response = requests.get(video_url, stream=True)
-
-    # Check that the request was successful
-    if response.status_code == 200:
-        # The path where you want to save the downloaded video
-        video_file = "video.mp4"
-        
-        # Write the contents of the response to a file
-        with open(video_file, 'wb') as f:
-            for chunk in response.iter_content(chunk_size=1024):
-                if chunk:
-                    f.write(chunk)
-
-        return video_file
-    else:
-        print(f"Failed to download video: {response.status_code}")
-        return None

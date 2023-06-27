@@ -4,9 +4,11 @@ from langchain.prompts import (
     SystemMessagePromptTemplate, 
     HumanMessagePromptTemplate
 )
-from langchain.chains import ConversationChain
+from langchain.chains import ConversationChain, LLMChain
 from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferWindowMemory
+from langchain.callbacks import get_openai_callback
+from token_usage import token_usage
 
 variables = {}
 conversations = []
@@ -29,7 +31,7 @@ def chatgptlc(conn, c, user_id, user_input, prompt, temperature, model="gpt-3.5-
 ])
 
     chat = ChatOpenAI(temperature=0.5, model=model)
-    memory = ConversationBufferWindowMemory(k=8, return_messages=True)
+    memory = ConversationBufferWindowMemory(k=5, return_messages=True)
   
     # Fetch past conversation from the database
     c.execute("SELECT prompt, output FROM conversations WHERE user_id=?", (user_id,))
@@ -42,8 +44,6 @@ def chatgptlc(conn, c, user_id, user_input, prompt, temperature, model="gpt-3.5-
         conversations.append({"input": input})
         conversations.append({"output": output})
         memory.save_context({"input": input}, {"output": output})
-    else:
-        print("No conversation history")
   
     conversation = ConversationChain(
     llm=chat,
@@ -51,12 +51,39 @@ def chatgptlc(conn, c, user_id, user_input, prompt, temperature, model="gpt-3.5-
     memory=memory,
     verbose=True
     )
+
+    #This second chain handles non-memory requests 
+    system_template = system_message_template
+    system_message_prompt = SystemMessagePromptTemplate.from_template(system_template)
+    human_template = "{text}"
+    human_message_prompt = HumanMessagePromptTemplate.from_template(human_template)
+    chat_prompt_2 = ChatPromptTemplate.from_messages([system_message_prompt, human_message_prompt])
+    
+    secondary_chain = LLMChain(
+    llm=chat,
+    prompt=chat_prompt_2,
+    )
   
     # Get the AI response
-    response = conversation.predict(input=prompt)
-    
-    # Save the prompt and output to the database
-    c.execute('INSERT INTO conversations (user_id, prompt, output) VALUES (?, ?, ?)', (user_id, prompt, response))
+    with get_openai_callback() as cb:
+        if prompt[0] == "1":
+            response = secondary_chain.run(text=prompt)
+        else:
+            response = conversation.predict(input=prompt)
+            c.execute('INSERT INTO conversations (user_id, prompt, output) VALUES (?, ?, ?)', (user_id, prompt, response))
+      
+        # Assign each statement to a variable
+        total_tokens = cb.total_tokens
+        prompt_tokens = cb.prompt_tokens
+        completion_tokens = cb.completion_tokens
+        total_cost = cb.total_cost
+
+        # Add the values to the totals dictionary
+        token_usage["total_tokens"] += total_tokens
+        token_usage["prompt_tokens"] += prompt_tokens
+        token_usage["completion_tokens"] += completion_tokens
+        token_usage["total_cost"] += total_cost
+
     conn.commit()
     
     return response

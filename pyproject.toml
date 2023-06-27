@@ -18,6 +18,10 @@ imgurpython = "^1.1.7"
 Pillow = "^9.5.0"
 instabot = "^0.117.0"
 pexels = "^0.0.11"
+gTTS = "^2.3.2"
+pydub = "^0.25.1"
+ffmpeg = "1.4"
+pandas = "^2.0.2"
 
 [tool.poetry.dev-dependencies]
 debugpy = "^1.6.2"

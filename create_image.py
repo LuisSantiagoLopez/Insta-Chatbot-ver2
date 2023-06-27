@@ -1,6 +1,7 @@
 from chatgpt_langchain import chatgptlc
 import openai
 import json
+from token_usage import token_usage
 
 def generate_image_dalle(image_prompt):
     response = openai.Image.create(
@@ -28,15 +29,15 @@ def create_image(conn, c, user_id, user_input, idea, styles):
 The text prompt should be one simple sentence describing the image with ', digital art' at the end. \
 Take these considerations when writing the prompt: \
 - styles such as 3d renders and manga work best \
-- describe the background. \
+- the description should be symbolic. \
 - Incorporate the user's style: '{styles}'. \
 Avoid these mistakes when writing a prompt: \
-- DALLE can not generate human faces, human figures, people or hands appropriately \
-- DALLE can not generate text on an image. No logos, no text. \
+- DALLE can not generate humans, faces, human figures, people, or hands. \
+- DALLE can not generate text on an image. No logos, no text, no numbers, no banners, no signs. \
 - DALLE can not create complex images. \
-- DALLE prompts should be extremely simple signle sentences. \
+- DALLE prompts should be extremely simple signle sentences with 10 or fewer words. \
 - ONLY take into account the idea inside the triple backticks. \
-- The DALLE prompt should contain NO explanations, don't unse 'symbolizing', \ 'representing' or any other justification. \
+- The DALLE prompt should contain NO explanations, do not use 'symbolizing', 'representing', 'like' or any other justification. \
 Your output should be a JSON dictionary with the key 'prompt' \
 Client's idea: ```{idea['Illustration']}```."
 
@@ -44,6 +45,9 @@ Client's idea: ```{idea['Illustration']}```."
     print(image_prompt)
     image_prompt = json.loads(image_prompt)
     image_url = choose_best_image(generate_image_dalle(image_prompt['prompt']))
+
+    token_usage["total_images"] += 4
+    token_usage["total_cost"] += 0.08
   
     if image_url == 0:
         while image_url == 0:
@@ -54,7 +58,10 @@ Client's idea: ```{idea['Illustration']}```."
             print(image_prompt)
       
             image_url = choose_best_image(generate_image_dalle(image_prompt['prompt']))
+            token_usage["total_images"] += 4
+            token_usage["total_cost"] += 0.08
 
         return {"image_url": image_url, "image_prompt": image_prompt}
-    
+      
+    print(idea["Instagram Idea"])
     return {"image_url": image_url, "image_prompt": image_prompt}

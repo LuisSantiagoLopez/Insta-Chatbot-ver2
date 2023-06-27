@@ -1,0 +1,9 @@
+User,Function,Cost,Total Cost
+PRUEBA13,<function create_idea at 0x7f4aaf025fc0>,0.2683,0.2683
+PRUEBA13,<function create_image at 0x7f4aaf046e60>,0.9183699999999999,1.18667
+PRUEBA13,<function create_idea at 0x7f4aaf025fc0>,0.0,1.18667
+PRUEBA13,<function create_image at 0x7f4aaf046e60>,0.20381000000000005,1.39048
+PRUEBA13,<function create_idea at 0x7f4aaf025fc0>,0.0,1.39048
+PRUEBA13,<function create_image at 0x7f4aaf046e60>,0.4289200000000002,1.8194000000000001
+PRUEBA13,<function create_idea at 0x7f4aaf025fc0>,0.560262,2.379662
+PRUEBA13,<function create_image at 0x7f4aaf046e60>,0.44101000000000035,2.8206720000000005
