@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block content %}
+{% csrf_token %}
+<h1>Instagram Chatbot</h1>
+
+    <div id="errorbox" class="alert alert-danger" role="alert" style="display: none;"></div>
+
+    <div id="chat-container" class="card mt-4">
+      
+        <div id="segment-description-container" class="card-body">
+            <div class="input-group mb-3">
+                <input type="text" id="target-segment-input" class="form-control" placeholder="Enter target segment...">
+                <input type="text" id="business-description-input" class="form-control" placeholder="Enter business description...">
+            </div>
+        </div>
+      
+        <div id="chatbox" class="card-body">
+            <!-- Chat messages will be dynamically added here -->
+        </div>
+      
+        <div id="button-container" class="card-footer">
+            <!-- Buttons will be dynamically added here -->
+        </div>
+      
+        <form id="message-form" method="POST" class="m-3">
+            {% csrf_token %}
+            <div class="input-group">
+                <input type="text" id="message-input" class="form-control" placeholder="Enter message...">
+                <div class="input-group-append">
+                    <button type="submit" class="btn btn-primary">Send</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Include Axios library from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/axios@0.22.0/dist/axios.min.js"></script>
+
+    <script>
+        // Add your script here
+        const messageForm = document.querySelector('#message-form');
+        const messageInput = document.querySelector('#message-input');
+        const targetSegmentInput = document.querySelector('#target-segment-input');
+        const businessDescriptionInput = document.querySelector('#business-description-input');
+        const chatbox = document.querySelector('#chatbox');
+        const errorbox = document.querySelector('#errorbox'); 
+
+        messageForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const message = messageInput.value;
+            const targetSegment = targetSegmentInput.value;
+            const businessDescription = businessDescriptionInput.value;
+            axios.post('chatbot', JSON.stringify({
+                action: message,
+                target_segment: targetSegment,
+                program_description: businessDescription
+            }), {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrftoken
+                }
+            })
+            .then(function (response) {
+                // Add the response to the chatbox
+                chatbox.innerHTML += `<p>${response.data.message}</p>`;
+            })
+            .catch(function (error) {
+                console.log(error);
+                errorbox.innerHTML = `<p>Error: ${error}</p>`;  // Display the error on the webpage
+            });
+
+            // Clear the input field
+            messageInput.value = '';
+        });
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        const csrftoken = getCookie('csrftoken');
+      
+    </script>
+{% endblock %}
